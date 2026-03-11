@@ -9,4 +9,6 @@ import org.springframework.stereotype.Component;
 @Data
 public class ProductsClientConfig {
     private String url;
+    private String apiKeyHeader;
+    private String apiKeyValue;
 }

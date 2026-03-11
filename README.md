@@ -41,6 +41,15 @@ spring.datasource.username=prueba
 spring.datasource.password=Prueb4
 ```
 
+### Configuración de Seguridad (API Key)
+
+Para la comunicación con servicios externos (como el servicio de productos), se requiere configurar una API Key en `application.properties`:
+
+```properties
+api.key.header=X-API-Key
+api.key.value=tu-valor-de-api-key
+```
+
 ### Ejecución
 
 Para ejecutar la aplicación, usa el siguiente comando:
