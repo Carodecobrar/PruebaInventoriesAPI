@@ -1,94 +1,94 @@
-# Inventory Management Service
+# Servicio de Gestión de Inventarios
 
-The **Inventory Management Service** is a high-concurrency microservice developed with **Spring Boot 3.x (configured as 4.0.3 in the POM)** to manage product stock efficiently. It provides robust mechanisms for processing purchases, ensuring data consistency and idempotency.
-
----
-
-## 🚀 Key Features
-
-- **Inventory Tracking**: Real-time monitoring of available and reserved stock per product.
-- **Atomic Purchase Processing**: Transactional purchase endpoint with built-in stock validation.
-- **Idempotency Support**: Mandatory `Idempotency-Key` header prevents duplicate transaction processing.
-- **Concurrency Control**: Implements **Optimistic Locking** using entity versioning to handle race conditions in high-load scenarios.
-- **Resilient External Integration**: Validates product existence via a reactive `WebClient` with built-in timeouts and retry logic.
-- **Event-Driven Design**: Dispatches `InventoryChangedEvent` internally after successful transactions.
-- **JSON:API Error Handling**: Standardized error responses following the JSON:API specification.
-- **Database Migrations**: Managed via **Flyway** for version-controlled schema evolution.
-- **API Documentation**: Integrated **Swagger UI** for easy endpoint exploration.
+El **Servicio de Gestión de Inventarios** es un microservicio de alta concurrencia desarrollado con **Spring Boot 3.x (configurado como 4.0.3 en el POM)** para gestionar el stock de productos de manera eficiente. Proporciona mecanismos robustos para el procesamiento de compras, asegurando la consistencia de los datos y la idempotencia.
 
 ---
 
-## 🏗️ Architectural Patterns
+## 🚀 Características Principales
 
-### 1. Idempotency
-To prevent double-billing or duplicate stock deduction, the service requires an `Idempotency-Key` for every purchase. The `IProcessedPurchaseRepository` tracks successful transactions by this key.
-
-### 2. Optimistic Locking
-Uses the JPA `@Version` annotation on the `Inventory` entity. This ensures that if two processes attempt to update the same product's stock simultaneously, only one succeeds, while the other is retried (up to 3 times in `PurchaseService`).
-
-### 3. Reactive Client
-Communication with the external Products Service is handled by `ProductsClientService` using Spring WebFlux's `WebClient`. It includes:
-- **Timeouts**: 3-second limit for product validation.
-- **Retries**: 3 attempts with exponential backoff (1s initial delay).
+- **Seguimiento de Inventario**: Monitoreo en tiempo real del stock disponible y reservado por producto.
+- **Procesamiento Atómico de Compras**: Endpoint transaccional de compra con validación de stock integrada.
+- **Soporte de Idempotencia**: El encabezado obligatorio `Idempotency-Key` evita el procesamiento de transacciones duplicadas.
+- **Control de Concurrencia**: Implementa **Bloqueo Optimista** (*Optimistic Locking*) utilizando versiones de entidad para manejar condiciones de carrera en escenarios de alta carga.
+- **Integración Resiliente**: Valida la existencia de productos a través de un `WebClient` reactivo con tiempos de espera (*timeouts*) y lógica de reintento integrados.
+- **Diseño Orientado a Eventos**: Despacha un `InventoryChangedEvent` internamente después de transacciones exitosas.
+- **Manejo de Errores JSON:API**: Respuestas de error estandarizadas siguiendo la especificación JSON:API.
+- **Migraciones de Base de Datos**: Gestionadas a través de **Flyway** para la evolución del esquema controlada por versiones.
+- **Documentación de API**: Integración con **Swagger UI** para una exploración sencilla de los endpoints.
 
 ---
 
-## 🛠️ Tech Stack
+## 🏗️ Patrones Arquitectónicos
+
+### 1. Idempotencia
+Para evitar cobros dobles o deducciones de stock duplicadas, el servicio requiere un `Idempotency-Key` para cada compra. El repositorio `IProcessedPurchaseRepository` rastrea las transacciones exitosas mediante esta clave.
+
+### 2. Bloqueo Optimista (Optimistic Locking)
+Utiliza la anotación `@Version` de JPA en la entidad `Inventory`. Esto asegura que si dos procesos intentan actualizar el stock del mismo producto simultáneamente, solo uno tenga éxito, mientras que el otro se reintenta (hasta 3 veces en `PurchaseService`).
+
+### 3. Cliente Reactivo
+La comunicación con el Servicio de Productos externo es gestionada por `ProductsClientService` utilizando `WebClient` de Spring WebFlux. Incluye:
+- **Timeouts**: Límite de 3 segundos para la validación de productos.
+- **Reintentos**: 3 intentos con retroceso exponencial (*exponential backoff*, retraso inicial de 1s).
+
+---
+
+## 🛠️ Stack Tecnológico
 
 - **Java**: 21
-- **Spring Boot**: 3.4.x (configured with parent 4.0.3)
-- **Spring Data JPA**: Persistence layer.
-- **PostgreSQL**: Relational database.
-- **Flyway**: Database versioning.
-- **WebFlux**: For reactive HTTP client calls.
-- **Lombok**: Boilerplate reduction.
-- **SpringDoc OpenAPI**: Interactive API documentation.
+- **Spring Boot**: 3.4.x (configurado con parent 4.0.3)
+- **Spring Data JPA**: Capa de persistencia.
+- **PostgreSQL**: Base de datos relacional.
+- **Flyway**: Versionado de base de datos.
+- **WebFlux**: Para llamadas HTTP reactivas.
+- **Lombok**: Reducción de código repetitivo.
+- **SpringDoc OpenAPI**: Documentación interactiva de API.
 
 ---
 
-## ⚙️ Configuration & Execution
+## ⚙️ Configuración y Ejecución
 
-### Prerequisites
+### Requisitos Previos
 - **JDK 21**
 - **Maven 3.x**
-- **PostgreSQL** instance (accessible at `localhost:5433`).
+- **Instancia de PostgreSQL** (accesible en `localhost:5433`).
 
-### Database Setup
-The service expects a database named `inventory_db`. Configure your credentials in `src/main/resources/application.properties`:
+### Configuración de la Base de Datos
+El servicio espera una base de datos llamada `inventory_db`. Configura tus credenciales en `src/main/resources/application.properties`:
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5433/inventory_db
-spring.datasource.username=your_user
-spring.datasource.password=your_password
+spring.datasource.username=tu_usuario
+spring.datasource.password=tu_contraseña
 ```
 
-### External Services
-Configure the Products Service URL and authentication in `application.properties`:
+### Servicios Externos
+Configura la URL del Servicio de Productos y la autenticación en `application.properties`:
 
 ```properties
-api.products.url=http://external-products-service/api
+api.products.url=http://servicio-externo-productos/api
 api.key.header=X-API-Key
-api.key.value=your-secure-api-key
+api.key.value=tu-api-key-segura
 ```
 
-### Running the Application
+### Ejecución de la Aplicación
 ```bash
 ./mvnw spring-boot:run
 ```
-The service will be available at `http://localhost:8081`.
+El servicio estará disponible en `http://localhost:8081`.
 
 ---
 
-## 📖 API Documentation
+## 📖 Documentación de la API
 
-Access the **Swagger UI** for full interactive documentation:
+Accede a **Swagger UI** para la documentación interactiva completa:
 [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
 
-### Primary Endpoint: Process Purchase
+### Endpoint Principal: Procesar Compra
 - **URL**: `POST /api/purchases`
-- **Headers**:
-    - `Idempotency-Key` (Required): Unique transaction identifier (UUID recommended).
-- **Body**:
+- **Encabezados**:
+    - `Idempotency-Key` (Obligatorio): Identificador único de transacción (se recomienda UUID).
+- **Cuerpo (Body)**:
   ```json
   {
     "productId": "550e8400-e29b-41d4-a716-446655440000",
@@ -98,13 +98,13 @@ Access the **Swagger UI** for full interactive documentation:
 
 ---
 
-## 📁 Project Structure
+## 📁 Estructura del Proyecto
 
-- `com.prueba.inventories.controller`: REST API controllers.
-- `com.prueba.inventories.service`: Business logic, retry mechanisms, and external client services.
-- `com.prueba.inventories.model`: JPA entities (Inventory, ProcessedPurchase).
-- `com.prueba.inventories.repository`: Spring Data JPA repositories.
-- `com.prueba.inventories.dto`: Data transfer objects, JSON:API wrappers, and custom exceptions.
-- `com.prueba.inventories.config`: Spring configuration beans (WebClient, Custom properties).
-- `com.prueba.inventories.event`: Internal application events for decoupled processing.
-- `db.migration`: Flyway SQL migration scripts.
+- `com.prueba.inventories.controller`: Controladores de la API REST.
+- `com.prueba.inventories.service`: Lógica de negocio, mecanismos de reintento y servicios de clientes externos.
+- `com.prueba.inventories.model`: Entidades JPA (Inventory, ProcessedPurchase).
+- `com.prueba.inventories.repository`: Repositorios de Spring Data JPA.
+- `com.prueba.inventories.dto`: Objetos de transferencia de datos, envoltorios JSON:API y excepciones personalizadas.
+- `com.prueba.inventories.config`: Beans de configuración de Spring (WebClient, propiedades personalizadas).
+- `com.prueba.inventories.event`: Eventos internos de la aplicación para procesamiento desacoplado.
+- `db.migration`: Scripts de migración SQL de Flyway.
