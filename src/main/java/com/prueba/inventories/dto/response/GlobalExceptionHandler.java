@@ -15,8 +15,11 @@ import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(ProductNotFoundException.class)
     public ResponseEntity<JsonApiErrorResponse> handleProductNotFound(ProductNotFoundException ex, HttpServletRequest request) {
+        log.warn("Recurso no encontrado: {} en la ruta: {}", ex.getMessage(), request.getRequestURI());
         JsonApiErrorResponse response = JsonApiErrorResponse.builder()
                 .errors(List.of(
                         JsonApiErrorResponse.Error.builder()
@@ -31,6 +34,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ProductsServiceException.class)
     public ResponseEntity<JsonApiErrorResponse> handleProductsServiceException(ProductsServiceException ex, HttpServletRequest request) {
+        log.error("Error en servicio externo de productos: {} al acceder a: {}", ex.getMessage(), request.getRequestURI());
         JsonApiErrorResponse response = JsonApiErrorResponse.builder()
                 .errors(List.of(
                         JsonApiErrorResponse.Error.builder()
@@ -44,6 +48,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(OptimisticLockException.class)
     public ResponseEntity<JsonApiErrorResponse> handleOptimisticLockException(OptimisticLockException ex, HttpServletRequest request) {
+        log.error("Conflicto de concurrencia: {} en la ruta: {}", ex.getMessage(), request.getRequestURI());
         JsonApiErrorResponse response = JsonApiErrorResponse.builder()
             .errors(List.of(
                 JsonApiErrorResponse.Error.builder()
@@ -64,7 +69,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<JsonApiErrorResponse> handleInsufficientStock(
             InsufficientStockException ex,
             HttpServletRequest request) {
-
+        log.warn("Validación de stock fallida: {} en la ruta: {}", ex.getMessage(), request.getRequestURI());
         JsonApiErrorResponse response = JsonApiErrorResponse.builder()
                 .errors(List.of(
                         JsonApiErrorResponse.Error.builder()
@@ -83,6 +88,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<JsonApiErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
+        log.error("Error no controlado capturado en GlobalExceptionHandler: ", ex);
         JsonApiErrorResponse response = JsonApiErrorResponse.builder()
                 .errors(List.of(
                         JsonApiErrorResponse.Error.builder()

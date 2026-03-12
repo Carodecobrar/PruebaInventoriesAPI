@@ -25,13 +25,14 @@ public class PurchaseController {
     @PostMapping
     @Operation(summary = "Crear una nueva compra", description = "Procesa una solicitud de compra validando stock y registrando la transacción de forma idempotente")
     public ResponseEntity<PurchaseResponse> createPurchase(@Valid @RequestBody PurchaseRequest request, @RequestHeader(value = "Idempotency-Key", required = true) String idempotencyKey) {
-        log.info("Procesando nueva compra");
+        log.info("Recibida solicitud de compra para producto: {} con cantidad: {} e Idempotency-Key: {}", 
+                request.getProductId(), request.getQuantity(), idempotencyKey);
         PurchaseResponse response = purchaseService.processPurchase(request, idempotencyKey);
         if (response.getStatus().equals(ProcessedPurchaseStatus.ALREADY_PROCESSED.toString())) {
-            log.warn("La compra ya se habia procesado antes");
+            log.warn("La compra con Idempotency-Key: {} ya se había procesado anteriormente", idempotencyKey);
             return ResponseEntity.ok(response);
         }
-        log.warn("Compra completada");
+        log.info("Compra completada exitosamente para producto: {}", request.getProductId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

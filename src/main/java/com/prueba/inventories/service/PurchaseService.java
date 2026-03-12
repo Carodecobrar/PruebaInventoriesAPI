@@ -36,9 +36,10 @@ public class PurchaseService {
 
     @Transactional
     public PurchaseResponse processPurchase(PurchaseRequest request, String idempotencyKey) {
-        log.info("Procesando compra...");
+        log.info("Iniciando procesamiento de compra para producto: {} con Idempotency-Key: {}", 
+                request.getProductId(), idempotencyKey);
         if (processedPurchaseRepository.existsByIdempotencyKey(idempotencyKey)) {
-            log.info("La compra ya se había hecho antes");
+            log.warn("Compra ignorada: El Idempotency-Key: {} ya existe en el sistema", idempotencyKey);
             return PurchaseResponse
                     .builder()
                     .productId(request.getProductId())
@@ -47,10 +48,12 @@ public class PurchaseService {
                     .message("La compra ya se había hecho antes")
                     .build();
         }
+        log.debug("Validando existencia del producto: {} en el servicio externo", request.getProductId());
         ProductDTO product = productsClient
                 .validateIfProductExists(request.getProductId())
                 .block();
         if (product == null) {
+            log.error("Producto no encontrado en el sistema externo: {}", request.getProductId());
             throw new ProductNotFoundException(request.getProductId().toString());
         }
         return processWithRetry(request, idempotencyKey, 0);
@@ -59,16 +62,23 @@ public class PurchaseService {
     @Transactional
     public PurchaseResponse processWithRetry(PurchaseRequest request, String idempotencyKey, int retryCount) {
         try {
+            log.debug("Intento {} para procesar compra de producto: {}", retryCount, request.getProductId());
             Inventory inventory = inventoryRepository
                     .findByProductId(request.getProductId())
-                    .orElseThrow(() -> new InsufficientStockException("No hay stock para el producto: " + request.getProductId()));
+                    .orElseThrow(() -> {
+                        log.error("No se encontró registro de inventario para el producto: {}", request.getProductId());
+                        return new InsufficientStockException("No hay stock para el producto: " + request.getProductId());
+                    });
             int availableStock = inventory.getAvailable() - inventory.getReserved();
             if (availableStock < request.getQuantity()) {
+                log.warn("Stock insuficiente para producto: {}. Disponible: {}, Solicitado: {}", 
+                        request.getProductId(), availableStock, request.getQuantity());
                 throw new InsufficientStockException(String.format("Stock insuficiente. Disponible: %d, Solicitado: %d", availableStock, request.getQuantity()));
             }
             int previousAvailable = inventory.getAvailable();
             inventory.reserve(request.getQuantity());
             Inventory updatedInventory = inventoryRepository.save(inventory);
+            
             ProcessedPurchase processed = new ProcessedPurchase();
             processed.setIdempotencyKey(idempotencyKey);
             processed.setProductId(request.getProductId());
@@ -76,7 +86,10 @@ public class PurchaseService {
             processed.setStatus(ProcessedPurchaseStatus.COMPLETED.toString());
             processed.setProcessedAt(LocalDateTime.now());
             processedPurchaseRepository.save(processed);
-            log.info("Compra realizada");
+            
+            log.info("Compra procesada con éxito. Stock anterior: {}, Nuevo stock: {}", 
+                    previousAvailable, updatedInventory.getAvailable());
+            
             InventoryChangedEvent event = new InventoryChangedEvent(
                     request.getProductId(),
                     previousAvailable,
@@ -95,10 +108,12 @@ public class PurchaseService {
                     .build();
         } catch (OptimisticLockException e) {
             if (retryCount < MAX_RETRIES) {
-                log.warn("Conflicto entre compras, reintentando");
+                log.warn("Conflicto de concurrencia detectado para producto: {}. Reintentando ({}/{})", 
+                        request.getProductId(), retryCount + 1, MAX_RETRIES);
                 return processWithRetry(request, idempotencyKey, retryCount + 1);
             } else {
-                log.error("No se pudo completar la compra, se superó el máximo de intentos");
+                log.error("Se superó el máximo de reintentos ({}) debido a conflictos de concurrencia para producto: {}", 
+                        MAX_RETRIES, request.getProductId());
                 throw new OptimisticLockException("No se pudo completar la compra, se superó el máximo de intentos");
             }
         }

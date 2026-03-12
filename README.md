@@ -79,6 +79,43 @@ El servicio estará disponible en `http://localhost:8081`.
 
 ---
 
+## 🐳 Ejecución con Docker
+
+El proyecto incluye soporte para **Docker** y **Docker Compose** para facilitar el despliegue de la aplicación y su base de datos PostgreSQL.
+
+### Requisitos Previos
+- Docker
+- Docker Compose
+
+### Pasos para ejecutar:
+
+1. **Clonar el repositorio** y navegar a la carpeta raíz.
+2. **Ejecutar Docker Compose**:
+   ```bash
+   docker-compose up --build
+   ```
+
+Este comando realizará lo siguiente:
+- Levantará un contenedor con **PostgreSQL 15** en el puerto `5433`.
+- Construirá la imagen de la aplicación Spring Boot (usando un build multi-etapa con Maven y JDK 21).
+- Iniciará el servicio de inventarios en el puerto `8081`.
+
+### Notas sobre la red en Docker:
+- La aplicación se conecta a la base de datos usando el nombre del servicio `db` definido en `docker-compose.yml`.
+- Para comunicarse con el **Servicio de Productos** (si se ejecuta en el host local), se utiliza `host.docker.internal`.
+
+---
+
+## 📊 Observabilidad y Logs
+
+Se ha implementado una estrategia de logging robusta utilizando **SLF4J**:
+- **Logs de Negocio**: Registro de cada solicitud de compra, validación de stock y resultados de transacciones.
+- **Trazabilidad de Errores**: Captura detallada de excepciones en `GlobalExceptionHandler`.
+- **Reintentos**: Visibilidad sobre conflictos de concurrencia y reintentos automáticos.
+- **Logs Estructurados**: Configurado para generar logs en formato **ECS (Elastic Common Schema)** en `log.json`, facilitando la integración con herramientas de análisis de logs (ELK Stack).
+
+---
+
 ## 📖 Documentación de la API
 
 Accede a **Swagger UI** para la documentación interactiva completa:
