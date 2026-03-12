@@ -35,6 +35,17 @@ public class ProductsClientService {
         return webClient
                 .get()
                 .uri(uriBuilder -> uriBuilder
+                        .path("/products/{id}")
+                        .build(productId))
+                .retrieve()
+                .bodyToMono(ProductDTO.class)
+                .timeout(Duration.ofSeconds(3))
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
+                .doOnSuccess(p -> log.info("Producto encontrado: " + p.getId()))
+                .doOnError(e -> log.error("Error al buscar producto: " + e.getMessage()));
+        /*return webClient
+                .get()
+                .uri(uriBuilder -> uriBuilder
                         .path("/api/products/{id}")
                         .build(productId))
                 .retrieve()
@@ -54,7 +65,7 @@ public class ProductsClientService {
                 .onErrorResume(e -> !(e instanceof ProductNotFoundException || e instanceof ProductsServiceException), e -> {
                     log.error("Error inesperado al consultar productos: " + e.getMessage());
                     return Mono.error(new ProductsServiceException("Error en el servicio de productos: " + e.getMessage()));
-                });
+                });*/
     }
 
     public Mono<ProductDTO> fallbackProduct(UUID productId, Throwable t) {
