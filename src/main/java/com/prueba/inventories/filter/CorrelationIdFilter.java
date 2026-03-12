@@ -1,4 +1,4 @@
-package com.prueba.inventories.logging;
+package com.prueba.inventories.filter;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
