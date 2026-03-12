@@ -11,7 +11,7 @@ services:
     volumes:
       - inventories-data:/var/lib/postgresql/data
     networks:
-      - inventories-network
+      - microservices-net
 
   inventories-api:
     build:
@@ -24,20 +24,17 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://inventory-db:5432/inventory_db
       - SPRING_DATASOURCE_USERNAME=prueba
       - SPRING_DATASOURCE_PASSWORD=Prueb4
-      - SPRING_FLYWAY_LOCATIONS=classpath:db/migration
-      - PRODUCTS_SERVICE_URL=http://host.docker.internal:8080
-      - PRODUCTS_SERVICE_API_KEY_HEADER=X-API-Key
-      - PRODUCTS_SERVICE_API_KEY_VALUE=$2a$12$QEKgijszxHIM0YLIOluDNumEyJ8e6xzQfHNiUqwUa.48UteHaazJS
+      - SERVER_PORT=8081
+      - PRODUCTS_SERVICE_URL=http://products_api:8080
     depends_on:
       - inventory-db
     networks:
-      - inventories-network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-networks:
-  inventories-network:
-    driver: bridge
+      - microservices-net
 
 volumes:
   inventories-data:
+
+networks:
+  microservices-net:
+    external: true
+    name: microservices-net

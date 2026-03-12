@@ -5,8 +5,8 @@
 
 -- Migration script
 INSERT INTO inventory (product_id, available, reserved, version) VALUES
-('437d1959-4ea9-4f76-95a2-22524c400a76', 50, 5, 0),
-('43f4259e-7d89-4102-a284-038c9cc0673a', 30, 2, 0),
-('576c846a-ebd6-4f0e-926f-ff3f709cfdcb', 20, 1, 0),
-('d61b99fa-e79a-47a4-b96b-e03824d6373b', 15, 0, 0),
-('4b511954-a740-4f8e-8fbc-ca9b2a5c0ebc', 10, 0, 0);
+('ebc91b7a-9866-4be6-a916-53b66b4a50df', 50, 5, 0),
+('310ddc29-b0d7-4c53-b207-4d5832bc01d3', 30, 2, 0),
+('3e68b599-c9ac-4c82-8990-24000a7b6e64', 20, 1, 0),
+('b8850d05-a4e8-41fd-bc38-6b1eea807694', 15, 0, 0),
+('18e0be10-86a4-4a4a-b004-e10fb1dc7326', 10, 0, 0);
