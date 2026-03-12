@@ -4,9 +4,9 @@ import com.prueba.inventories.config.ProductsClientConfig;
 import com.prueba.inventories.dto.exception.ProductNotFoundException;
 import com.prueba.inventories.dto.exception.ProductsServiceException;
 import com.prueba.inventories.dto.external.ProductDTO;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -30,6 +30,7 @@ public class ProductsClientService {
                 .build();
     }
 
+    @CircuitBreaker(name = "productsClient", fallbackMethod = "fallbackProduct")
     public Mono<ProductDTO> validateIfProductExists(UUID productId) {
         return webClient
                 .get()
@@ -54,5 +55,11 @@ public class ProductsClientService {
                     log.error("Error inesperado al consultar productos: " + e.getMessage());
                     return Mono.error(new ProductsServiceException("Error en el servicio de productos: " + e.getMessage()));
                 });
+    }
+
+    public Mono<ProductDTO> fallbackProduct(UUID productId, Throwable t) {
+        return Mono.error(new ProductsServiceException(
+                "Products Service no disponible temporalmente. Intente más tarde."
+        ));
     }
 }
