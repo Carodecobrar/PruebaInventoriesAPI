@@ -25,7 +25,9 @@ services:
       - SPRING_DATASOURCE_USERNAME=prueba
       - SPRING_DATASOURCE_PASSWORD=Prueb4
       - SERVER_PORT=8081
-      - PRODUCTS_SERVICE_URL=http://products_api:8080
+      - PRODUCTS_SERVICE_URL=http://products-api:8080/internal
+      - PRODUCTS_SERVICE_API_KEY_HEADER=X-API-Key
+      - PRODUCTS_SERVICE_API_KEY_VALUE=$$2a$$12$$QEKgijszxHIM0YLIOluDNumEyJ8e6xzQfHNiUqwUa.48UteHaazJS
     depends_on:
       - inventory-db
     networks:
